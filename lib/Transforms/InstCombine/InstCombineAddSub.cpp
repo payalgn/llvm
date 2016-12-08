@@ -914,14 +914,14 @@ bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS,
   if (checkRippleForAdd(RHSKnownZero, LHSKnownZero))
     return true;
 
-  if (LHSKnownZero[BitWidth - 1] && RHSKnownZero[BitWidth - 1]){
-        //both positive and now we will check if either of the numbers have known zero bits in the first 4 MSB it will not overflow on an add           
-        if((LHSKnownZero[BitWidth-2] && LHSKnownZero[BitWidth-3] && LHSKnownZero[BitWidth-4]) ||
-           (RHSKnownZero[BitWidth-2] && RHSKnownZero[BitWidth-3] && RHSKnownZero[BitWidth-4]))
-                return true;
-  }
+   if (LHSKnownZero[BitWidth - 1] && RHSKnownZero[BitWidth - 1]){
 
-  
+        APInt Inv_LHS_KnownZero = ~LHSKnownZero;
+        APInt Inv_RHS_KnownZero = ~RHSKnownZero;
+
+        if((Inv_LHS_KnownZero & Inv_RHS_KnownZero) == 0)
+                return true;
+  }  
   
   return false;
 }
