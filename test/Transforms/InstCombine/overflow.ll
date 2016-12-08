@@ -120,3 +120,21 @@ if.end:
   %conv9 = trunc i64 %add to i32
   ret i32 %conv9
 }
+
+define i32 @rem_overflow_test(i32 %a) nounwind ssp {
+  %3 = and i32 %1, 1048575
+  %4 = and i32 %0, 458752
+  %5 = shl i32 %4, 12
+; CHECK-NOT: llvm.sadd.with.overflow
+  %6 = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %5, i32 %3)
+  %4 = extractvalue { i32, i1 } %6, 0 
+  %5 = extractvalue { i32, i1 } %6, 1 
+  br i1 %5, label %err_of, label %pass
+ 
+err_of:
+  tail call void @throwAnExceptionOrWhatever() nounwind
+  br label %pass
+
+pass:
+  ret i32 %4
+}
