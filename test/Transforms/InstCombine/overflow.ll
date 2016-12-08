@@ -2,6 +2,7 @@
 ; <rdar://problem/8558713>
 
 declare void @throwAnExceptionOrWhatever()
+declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32) nounwind readnone
 
 ; CHECK-LABEL: @test1(
 define i32 @test1(i32 %a, i32 %b) nounwind ssp {
@@ -120,16 +121,24 @@ if.end:
   %conv9 = trunc i64 %add to i32
   ret i32 %conv9
 }
+; CHECK-LABEL: @rem_overflow_test(
+; int trial(int x, int y)
+; {
+;       x = x & 0x70000;
+;       y = y & 0xfffff;
+;       x = x << 12;
+;       return x+y;
+;}
 define i32 @rem_overflow_test(i32 %x, i32 %y) nounwind ssp {
   %1 = and i32 %y, 1048575
   %2 = and i32 %x, 458752
   %3 = shl i32 %2, 12
-; CHECK-NOT: llvm.sadd.with.overflow
+; CHECK-NOT: llvm.sadd.with.overflow.i32
   %4 = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %3, i32 %1)
-  %5 = extractvalue { i32, i1 } %6, 0
-  %6 = extractvalue { i32, i1 } %6, 1
+  %5 = extractvalue { i32, i1 } %4, 0
+  %6 = extractvalue { i32, i1 } %4, 1
   br i1 %6, label %err_of, label %pass
- 
+
 err_of:
   tail call void @throwAnExceptionOrWhatever() nounwind
   br label %pass
